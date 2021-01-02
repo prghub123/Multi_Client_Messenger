@@ -46,7 +46,7 @@ def receive(client, num_bytes, alias):
 # Params: client socket object, alias of client, number of bytes (probably not necessary)
 def write(client, num_bytes, nickname): 
     while True:
-        message = f'{nickname}: {input("Message: ")}'
+        message = f'{nickname}: {input("You: ")}'
         client.send(message.encode("ascii"))
 
 # Main driver function for handling of client

@@ -1,7 +1,7 @@
 import socket 
 import select 
 import threading 
-import time 
+import os
 
 #Defines localhost, Port number, and number of bytes for messages sent/received 
 HOST = '127.0.0.1' #localhost 
@@ -35,9 +35,19 @@ def broadcast(message):
     for client in clientList:
         client.send(message) 
 
+# Closes all incoming and outgoing communication for the server 
+# Uses Shutdown and Close functions present in socket class 
+# Params: Server Socket to be closed 
+def close_server(server_sock):
+    print("No users left in the server. Closing server communication. Goodbye!") 
+    #server_sock.shutdown(socket.SHUT_RDWR) # SHUT_RDWR: sends and receives are disallowed 
+    #server_sock.close()
+    # Terminates program 
+    os._exit(0) 
+
 # Receive message from client and broadcast to other clients 
 # Params: client being serviced; number of bytes per message (default 1024)   
-def handle(client, num_bytes): 
+def handle(client, server, num_bytes): 
     while True: 
         # if message can be attained, receive it and broadcast it to other clients 
         try:
@@ -52,9 +62,14 @@ def handle(client, num_bytes):
             nickname = nickNames[index]
             broadcast(f"{nickname} has left the chat. Goodbye!".encode("ascii")) 
             nickNames.remove(nickname)
+            # BETA !! Remove if breaking server/client connection 
+            if 0 == len(clientList) == len(nickNames):
+                close_server(server) 
             break 
 
-# Establishes connection of client connecting to server 
+# Establishes connection of client and server 
+# Stores client socket and nickname of client 
+# Starts thread for client and executes handle function 
 # Params: the server socket 
 def receive(server_socket, num_bytes):
     while True:
@@ -73,7 +88,7 @@ def receive(server_socket, num_bytes):
         broadcast(f"{nickname} has joined the chat. Welcome!".encode("ascii"))
         client.send("You have connected to the server".encode("ascii"))
         # define and run a thread for each client that is connected to the server 
-        thread = threading.Thread(target=handle, args=(client,num_bytes))
+        thread = threading.Thread(target=handle, args=(client, server_socket, num_bytes))
         thread.start() 
 
 
